@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Camera, Eye, Share2, Smartphone, Sparkles, ChevronRight, Flame, Smile } from 'lucide-react'
+import { Camera, Eye, Share2, Smartphone, Sparkles, ChevronRight, Flame, Smile, Box } from 'lucide-react'
 import { ROUTES, HIRO_MARKER_URL } from '@/constants'
 
 const steps = [
@@ -232,6 +232,52 @@ export default function LandingPage() {
               </div>
             </button>
 
+            {/* Object Detector (Image Classifier) Demo */}
+            <button
+              onClick={() => navigate(ROUTES.OBJECTS)}
+              className="flex flex-col items-center gap-3 p-5 rounded-2xl
+                bg-white/5 border border-cyan-500/30
+                hover:bg-cyan-500/10 hover:border-cyan-500/60
+                active:scale-[0.97] transition-all duration-150
+                text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <Box size={22} className="text-white" />
+              </div>
+              <div className="w-full">
+                <p className="text-white font-semibold text-sm">🔍 Object Classifier</p>
+                <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">
+                  โหมดเบา ส่องของบนโต๊ะแล้วเห็นชื่อวัตถุแบบ real-time (ไม่มีกรอบ)
+                </p>
+              </div>
+              <div className="w-full flex items-center gap-1 text-cyan-400 text-xs font-medium">
+                เริ่มเลย <ChevronRight size={12} />
+              </div>
+            </button>
+
+            {/* Object Detector (Boxes) Demo */}
+            <button
+              onClick={() => navigate(ROUTES.OBJECTS_DETECTOR)}
+              className="flex flex-col items-center gap-3 p-5 rounded-2xl
+                bg-white/5 border border-emerald-500/30
+                hover:bg-emerald-500/10 hover:border-emerald-500/60
+                active:scale-[0.97] transition-all duration-150
+                text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-lime-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <Box size={22} className="text-white" />
+              </div>
+              <div className="w-full">
+                <p className="text-white font-semibold text-sm">📦 Object Detector (Boxes)</p>
+                <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">
+                  โหมดมีกรอบ ล้อมรอบวัตถุพร้อมชื่อและเปอร์เซ็นต์ความมั่นใจแบบ real-time
+                </p>
+              </div>
+              <div className="w-full flex items-center gap-1 text-emerald-400 text-xs font-medium">
+                เริ่มเลย <ChevronRight size={12} />
+              </div>
+            </button>
+
           </div>
         </div>
 
@@ -242,3 +288,4 @@ export default function LandingPage() {
     </div>
   )
 }
+

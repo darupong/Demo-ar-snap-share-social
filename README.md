@@ -1,12 +1,14 @@
 # AR Snap Share Social — React + Vite
 
-A multi-page AR & AI demo hub: **AR Marker (Three.js)**, **Magic Hands (hand tracking + fire)**, and **Face Mesh** (2D effects + 3D glasses OBJ), with capture and share. Built with React + Vite + TypeScript.
+A multi-page AR & AI demo hub: **AR Marker (Three.js)**, **Magic Hands (hand tracking + fire)**, **Face Mesh** (2D effects + 3D glasses OBJ), and **Object Demos** (Image Classifier + Object Detector with boxes), with capture and share. Built with React + Vite + TypeScript.
 
 ## 🚀 Features
 
 - **AR Marker** — Hiro marker tracking with AR.js + Three.js; 3D object overlay, capture & share
 - **Magic Hands** — MediaPipe Hand Tracking with fire/effect from fingertips; color presets, capture & share
 - **Face Mesh** — MediaPipe Face Landmarker with 2D effects (glasses, lipstick, blush, crown, cat, stickers) and **3D Nerd Glasses** (OBJ) that follow head pose (yaw/tilt)
+- **Object Classifier** — MediaPipe Image Classifier (light) shows top labels (เช่น bottle, book, chair) over the scene
+- **Object Detector (Boxes)** — MediaPipe Object Detector draws bounding boxes with label + confidence around detected objects (filtered to ignore people/body-related classes)
 - **Capture & Share** — Screenshot overlay, download PNG, Web Share API (file + text) with Facebook fallback
 - **React + TypeScript** — Type-safe UI, Vite, Tailwind CSS, path alias `@/`
 - **Router-based hub** — Separate demo pages via React Router; constants for routes and share text
@@ -20,7 +22,7 @@ A multi-page AR & AI demo hub: **AR Marker (Three.js)**, **Magic Hands (hand tra
 | Routing        | React Router 6                      |
 | Styling        | Tailwind CSS 4                      |
 | AR             | AR.js (CDN), Three.js               |
-| Vision         | MediaPipe Tasks Vision (Face, Hands)|
+| Vision         | MediaPipe Tasks Vision (Face, Hands, Image Classifier, Object Detector)|
 | UI Primitives  | Radix UI (Dialog, Slot), Lucide Icons|
 | Testing        | Vitest, Testing Library             |
 
@@ -47,12 +49,14 @@ npm run test
 
 ## 🧭 Routes
 
-| Path       | Demo          | Description                                      |
-|-----------|---------------|--------------------------------------------------|
-| `/`       | Landing       | Demo hub with AR, Magic Hands, Face Mesh cards   |
-| `/ar`     | AR Marker     | Hiro marker tracking, 3D overlay, capture/share  |
-| `/magic`  | Magic Hands   | Hand tracking + fire effect, capture/share      |
-| `/facemesh` | Face Mesh   | Face effects + 3D glasses OBJ, capture/share    |
+| Path             | Demo                     | Description                                                     |
+|------------------|--------------------------|-----------------------------------------------------------------|
+| `/`              | Landing                  | Demo hub with AR, Magic Hands, Face Mesh, Object cards         |
+| `/ar`            | AR Marker                | Hiro marker tracking, 3D overlay, capture/share                 |
+| `/magic`         | Magic Hands              | Hand tracking + fire effect, capture/share                     |
+| `/facemesh`      | Face Mesh                | Face effects + 3D glasses OBJ, capture/share                   |
+| `/objects`       | Object Classifier        | Light Image Classifier: top labels only (no boxes), capture/share |
+| `/objects-detector` | Object Detector (Boxes) | Heavier Object Detector: bounding boxes + labels, capture/share |
 
 ## 📱 Testing on Mobile
 
@@ -67,7 +71,7 @@ Note: Some mobile browsers require HTTPS for camera access. Use ngrok or a local
 
 1. Open the app in the browser
 2. Allow camera access when prompted
-3. Choose a demo from the home page (AR Marker, Magic Hands, or Face Mesh)
+3. Choose a demo from the home page (AR Marker, Magic Hands, Face Mesh, Object Classifier, or Object Detector)
 4. Wait for the model to load (loading spinner disappears)
 5. For **AR**: show the Hiro marker to the camera; for **Magic Hands**: show your index finger; for **Face Mesh**: face the camera and pick an effect
 6. Use the center button to capture, then download or share
@@ -84,9 +88,11 @@ demo-ar-snap-share-social/
 │   │   ├── ARScene.tsx           # AR.js + Three.js scene
 │   │   ├── FaceMeshCanvas.tsx    # Face Mesh + 3D glasses (OBJ)
 │   │   ├── HandFireCanvas.tsx    # Hand tracking + fire effect
+│   │   ├── ObjectDetectCanvas.tsx    # Image Classifier (labels only) canvas
+│   │   └── ObjectDetectorCanvas.tsx  # Object Detector (bounding boxes + labels) canvas
 │   │   └── ui/                   # Button, Badge, Dialog, Sheet, Card
 │   ├── constants/
-│   │   ├── routes.ts             # ROUTES (/, /ar, /magic, /facemesh)
+│   │   ├── routes.ts             # ROUTES (/, /ar, /magic, /facemesh, /objects, /objects-detector)
 │   │   ├── app.ts                # HIRO_MARKER_URL
 │   │   ├── magic.ts              # FIRE_PRESETS, MAGIC_SHARE_TEXT
 │   │   ├── ar.ts                 # AR_SHARE_TEXT
@@ -100,8 +106,12 @@ demo-ar-snap-share-social/
 │   │   │   └── components/InstructionsSheet.tsx
 │   │   ├── MagicPage.tsx
 │   │   │   └── components/MagicInstructions.tsx
-│   │   └── FaceMeshPage.tsx
-│   │       └── components/FaceMeshInstructions.tsx
+│   │   ├── FaceMeshPage.tsx
+│   │   │   └── components/FaceMeshInstructions.tsx
+│   │   ├── ObjectDetectPage.tsx
+│   │   │   └── components/ObjectDetectInstructions.tsx
+│   │   └── ObjectDetectorPage.tsx
+│   │       └── components/ObjectDetectorInstructions.tsx
 │   ├── types/
 │   │   └── ar.d.ts               # AR.js / Three.js globals
 │   ├── test/
