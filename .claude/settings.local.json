@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest:*)",
+      "Bash(xxd:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 15 npx tsc:*)",
+      "Bash(cp:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
