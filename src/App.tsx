@@ -6,6 +6,7 @@ import MagicPage from '@/pages/MagicPage'
 import FaceMeshPage from '@/pages/FaceMeshPage'
 import ObjectDetectPage from '@/pages/ObjectDetectPage'
 import ObjectDetectorPage from '@/pages/ObjectDetectorPage'
+import AIPhotoPage from '@/pages/AIPhotoPage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Route path={ROUTES.FACEMESH} element={<FaceMeshPage />} />
       <Route path={ROUTES.OBJECTS} element={<ObjectDetectPage />} />
       <Route path={ROUTES.OBJECTS_DETECTOR} element={<ObjectDetectorPage />} />
+      <Route path={ROUTES.AIPHOTO} element={<AIPhotoPage />} />
     </Routes>
   )
 }

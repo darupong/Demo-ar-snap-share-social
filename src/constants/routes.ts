@@ -6,6 +6,7 @@ export const ROUTES = {
   FACEMESH: '/facemesh',
   OBJECTS: '/objects',
   OBJECTS_DETECTOR: '/objects-detector',
+  AIPHOTO: '/aiphoto',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]

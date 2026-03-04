@@ -278,6 +278,29 @@ export default function LandingPage() {
               </div>
             </button>
 
+            {/* AI Photo Demo */}
+            <button
+              onClick={() => navigate(ROUTES.AIPHOTO)}
+              className="flex flex-col items-center gap-3 p-5 rounded-2xl
+                bg-white/5 border border-purple-500/30
+                hover:bg-purple-500/10 hover:border-purple-500/60
+                active:scale-[0.97] transition-all duration-150
+                text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                <Sparkles size={22} className="text-white" />
+              </div>
+              <div className="w-full">
+                <p className="text-white font-semibold text-sm">✨ AI Photo</p>
+                <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">
+                  ถ่ายภาพแล้วให้ AI แปลงเป็นงานศิลปะสุดพิเศษ
+                </p>
+              </div>
+              <div className="w-full flex items-center gap-1 text-purple-400 text-xs font-medium">
+                เริ่มเลย <ChevronRight size={12} />
+              </div>
+            </button>
+
           </div>
         </div>
 
