@@ -12,6 +12,7 @@ import DrawPage from '@/pages/DrawPage'
 import GesturePage from '@/pages/GesturePage'
 import SplashPage from '@/pages/SplashPage'
 import ImageTrackingPage from '@/pages/ImageTrackingPage'
+import CrabTrackingPage from '@/pages/CrabTrackingPage'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
       <Route path={ROUTES.GESTURE} element={<GesturePage />} />
       <Route path={ROUTES.SPLASH} element={<SplashPage />} />
       <Route path={ROUTES.IMAGE_TRACKING} element={<ImageTrackingPage />} />
+      <Route path={ROUTES.CRAB_TRACKING} element={<CrabTrackingPage />} />
     </Routes>
   )
 }

@@ -1,0 +1,8 @@
+Model Information:
+* title:	[Low Poly] Crab
+* source:	https://sketchfab.com/3d-models/low-poly-crab-ab3cb7159689443da2c3796e2f3a8274
+* author:	Jiffycrew (https://sketchfab.com/jiffycrew)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

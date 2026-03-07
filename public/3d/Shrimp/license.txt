@@ -1,0 +1,8 @@
+Model Information:
+* title:	[Low Poly] Shrimp
+* source:	https://sketchfab.com/3d-models/low-poly-shrimp-094a8547797445529320c31c634e63cb
+* author:	Jiffycrew (https://sketchfab.com/jiffycrew)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

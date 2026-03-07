@@ -12,6 +12,7 @@ export const ROUTES = {
   GESTURE: '/gesture',
   SPLASH: '/splash',
   IMAGE_TRACKING: '/image-tracking',
+  CRAB_TRACKING: '/crabtracking',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]
