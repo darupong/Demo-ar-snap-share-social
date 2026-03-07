@@ -134,24 +134,31 @@ const ARScene = forwardRef<ARSceneRef, ARSceneProps>(function ARScene(
     scene.add(pointLight2)
 
     // ── AR Toolkit Source ───────────────────────────────────────────────────
+    // Use portrait-aware source dimensions so AR.js and the camera agree on orientation.
+    // Swapping W/H for portrait prevents the marker detection area from being rotated
+    // relative to what the user sees on a portrait mobile screen.
+    const isPortrait = window.innerHeight > window.innerWidth
+    const srcW = isPortrait ? 480 : 640
+    const srcH = isPortrait ? 640 : 480
+
     const arToolkitSource = new THREEx.ArToolkitSource({
       sourceType: 'webcam',
-      sourceWidth: 640,
-      sourceHeight: 480,
+      sourceWidth: srcW,
+      sourceHeight: srcH,
     })
 
     arToolkitSource.init(
       () => {
-        // Get the video element AR.js created
+        // Get the video element AR.js created.
+        // Do NOT apply width/height/objectFit CSS — AR.js manages the video size via
+        // onResizeElement(). Overriding those styles breaks projection alignment between
+        // the video and the Three.js overlay canvas, especially on mobile portrait.
         const video = arToolkitSource.domElement as HTMLVideoElement
         video.className = 'ar-video'
         video.style.position = 'absolute'
         video.style.top = '0'
         video.style.left = '0'
         video.style.zIndex = '0'
-        video.style.width = '100%'
-        video.style.height = '100%'
-        video.style.objectFit = 'cover'
         container.insertBefore(video, container.firstChild)
         videoRef.current = video
 
@@ -168,8 +175,9 @@ const ARScene = forwardRef<ARSceneRef, ARSceneProps>(function ARScene(
       cameraParametersUrl: '/camera_para.dat',
       detectionMode: 'mono',
       maxDetectionRate: 30,
-      canvasWidth: 640,
-      canvasHeight: 480,
+      // Must match sourceWidth/sourceHeight so the internal detection canvas aligns with video
+      canvasWidth: srcW,
+      canvasHeight: srcH,
       imageSmoothingEnabled: false,
     })
 
@@ -248,15 +256,20 @@ const ARScene = forwardRef<ARSceneRef, ARSceneProps>(function ARScene(
     markerRoot.add(group)
 
     // ── Resize Handler ──────────────────────────────────────────────────────
+    // copyElementSizeTo already sets the canvas/renderer size to match the AR-managed video.
+    // Calling renderer.setSize() afterwards would undo that and cause 3D overlay misalignment.
     function handleResize() {
       arToolkitSource.onResizeElement()
       arToolkitSource.copyElementSizeTo(renderer.domElement)
       if (arToolkitContext.arController !== null) {
         arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
       }
-      renderer.setSize(window.innerWidth, window.innerHeight)
     }
     window.addEventListener('resize', handleResize)
+    // orientationchange fires before the browser updates innerWidth/innerHeight,
+    // so delay by 200ms to get the final dimensions.
+    const handleOrientation = () => setTimeout(handleResize, 200)
+    window.addEventListener('orientationchange', handleOrientation)
 
     // ── Animation Loop ──────────────────────────────────────────────────────
     let wasVisible = false
@@ -322,6 +335,7 @@ const ARScene = forwardRef<ARSceneRef, ARSceneProps>(function ARScene(
       isInitializedRef.current = false
       cancelAnimationFrame(animFrameRef.current)
       window.removeEventListener('resize', handleResize)
+      window.removeEventListener('orientationchange', handleOrientation)
 
       renderer.dispose()
       icoGeo.dispose()

@@ -7,7 +7,7 @@ import './index.css'
 // StrictMode causes effects to run twice in development which breaks
 // AR.js initialization (creates duplicate renderers and camera streams).
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
     <App />
   </BrowserRouter>
 )

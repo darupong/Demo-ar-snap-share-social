@@ -69,6 +69,14 @@ const ObjectDetectorCanvas = forwardRef<ObjectDetectorCanvasRef, ObjectDetectorC
     const lastDetectTsRef = useRef<number>(0)
     const isInitRef = useRef(false)
 
+    // Stable callback refs — prevents effect from re-running when parent re-renders
+    const onObjectsDetectedRef = useRef(onObjectsDetected)
+    const onReadyRef = useRef(onReady)
+    const onErrorRef = useRef(onError)
+    useEffect(() => { onObjectsDetectedRef.current = onObjectsDetected }, [onObjectsDetected])
+    useEffect(() => { onReadyRef.current = onReady }, [onReady])
+    useEffect(() => { onErrorRef.current = onError }, [onError])
+
     // Capture current frame with overlay as PNG data URL
     const captureImage = useCallback(async (): Promise<string | null> => {
       const video = videoRef.current
@@ -163,14 +171,14 @@ const ObjectDetectorCanvas = forwardRef<ObjectDetectorCanvasRef, ObjectDetectorC
           }
 
           detectorRef.current = detector
-          onReady?.()
+          onReadyRef.current?.()
           renderLoop()
         } catch (err) {
           const msg =
             err instanceof Error && err.name === 'NotAllowedError'
               ? 'กล้องไม่พร้อมใช้งาน กรุณาอนุญาตการเข้าถึงกล้อง'
               : 'โหลด Object Detector ไม่สำเร็จ ตรวจการเชื่อมต่ออินเทอร์เน็ต แล้วลองรีเฟรชหน้าอีกครั้ง'
-          onError?.(msg)
+          onErrorRef.current?.(msg)
         }
       }
 
@@ -259,7 +267,7 @@ const ObjectDetectorCanvas = forwardRef<ObjectDetectorCanvasRef, ObjectDetectorC
           labels.push(label)
         })
 
-        if (onObjectsDetected) onObjectsDetected(Array.from(new Set(labels)))
+        onObjectsDetectedRef.current?.(Array.from(new Set(labels)))
       }
 
       init()
@@ -278,7 +286,7 @@ const ObjectDetectorCanvas = forwardRef<ObjectDetectorCanvasRef, ObjectDetectorC
         detectorRef.current?.close()
         detectorRef.current = null
       }
-    }, [onError, onReady, onObjectsDetected])
+    }, [])
 
     return (
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>

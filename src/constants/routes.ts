@@ -7,6 +7,11 @@ export const ROUTES = {
   OBJECTS: '/objects',
   OBJECTS_DETECTOR: '/objects-detector',
   AIPHOTO: '/aiphoto',
+  POSE: '/pose',
+  DRAW: '/draw',
+  GESTURE: '/gesture',
+  SPLASH: '/splash',
+  IMAGE_TRACKING: '/image-tracking',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]
