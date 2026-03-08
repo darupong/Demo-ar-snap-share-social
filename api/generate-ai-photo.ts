@@ -51,7 +51,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sequential_image_generation: 'disabled',
         response_format: 'url',
         size: '2K',
-        output_format: 'png',
         stream: false,
         watermark: true,
       }),
