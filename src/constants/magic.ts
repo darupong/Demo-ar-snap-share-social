@@ -1,5 +1,5 @@
 /** Share text for Magic Hands when sharing to social */
-export const MAGIC_SHARE_TEXT = 'มือมายากล! ไฟพุ่งจากปลายนิ้ว ✨🔥 #demo'
+export const MAGIC_SHARE_TEXT = 'มือมายากล! ไฟพุ่งจากปลายนิ้ว ✨🔥 #siampiwat_demo'
 
 export interface FirePreset {
   color: string

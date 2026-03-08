@@ -65,11 +65,11 @@ export default function MagicPage() {
     try {
       const file = new File([blob], 'magic-hands.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Magic Hands #demo', text: MAGIC_SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Magic Hands #siampiwat_demo', text: MAGIC_SHARE_TEXT, files: [file] })
         return
       }
       if (canNativeShare) {
-        await navigator.share({ title: 'Magic Hands #demo', text: MAGIC_SHARE_TEXT, url: window.location.origin })
+        await navigator.share({ title: 'Magic Hands #siampiwat_demo', text: MAGIC_SHARE_TEXT, url: window.location.origin })
         return
       }
       const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`
@@ -312,7 +312,7 @@ export default function MagicPage() {
                   color: fireColor,
                 }}
               >
-                #demo
+                #siampiwat_demo
               </span>
             </div>
 

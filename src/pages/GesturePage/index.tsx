@@ -6,7 +6,7 @@ import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import GestureInstructions from './components/GestureInstructions'
 
-const SHARE_TEXT = 'ลองทำท่ามือแล้วให้ AI อ่าน Gesture แบบ real-time! #demo'
+const SHARE_TEXT = 'ลองทำท่ามือแล้วให้ AI อ่าน Gesture แบบ real-time! #siampiwat_demo'
 
 const GESTURE_LABELS: Record<string, string> = {
   Thumb_Up:    '👍 Thumbs Up',
@@ -72,11 +72,11 @@ export default function GesturePage() {
     try {
       const file = new File([blob], 'gesture-emoji.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Gesture Emoji #demo', text: SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Gesture Emoji #siampiwat_demo', text: SHARE_TEXT, files: [file] })
         return
       }
       if (canNativeShare) {
-        await navigator.share({ title: 'Gesture Emoji #demo', text: SHARE_TEXT, url: window.location.origin })
+        await navigator.share({ title: 'Gesture Emoji #siampiwat_demo', text: SHARE_TEXT, url: window.location.origin })
         return
       }
       const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`

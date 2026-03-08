@@ -6,7 +6,7 @@ import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import ObjectDetectInstructions from './components/ObjectDetectInstructions'
 
-const SHARE_TEXT = 'สนุกกับ AR Object Detector — ส่องของรอบตัวแล้วแชร์ให้เพื่อนดู! #demo'
+const SHARE_TEXT = 'สนุกกับ AR Object Detector — ส่องของรอบตัวแล้วแชร์ให้เพื่อนดู! #siampiwat_demo'
 
 export default function ObjectDetectPage() {
   const navigate = useNavigate()
@@ -66,11 +66,11 @@ export default function ObjectDetectPage() {
     try {
       const file = new File([blob], 'objects.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Object Detector #demo', text: SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Object Detector #siampiwat_demo', text: SHARE_TEXT, files: [file] })
         return
       }
       if (canNativeShare) {
-        await navigator.share({ title: 'Object Detector #demo', text: SHARE_TEXT, url: window.location.origin })
+        await navigator.share({ title: 'Object Detector #siampiwat_demo', text: SHARE_TEXT, url: window.location.origin })
         return
       }
       const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`

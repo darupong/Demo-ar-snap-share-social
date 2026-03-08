@@ -6,7 +6,7 @@ import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import PoseInstructions from './components/PoseInstructions'
 
-const SHARE_TEXT = 'ส่องกล้องหน้าแล้วเห็น Skeleton ร่างกายแบบ real-time! #demo'
+const SHARE_TEXT = 'ส่องกล้องหน้าแล้วเห็น Skeleton ร่างกายแบบ real-time! #siampiwat_demo'
 
 export default function PosePage() {
   const navigate = useNavigate()
@@ -62,11 +62,11 @@ export default function PosePage() {
     try {
       const file = new File([blob], 'pose-skeleton.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Pose Skeleton #demo', text: SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Pose Skeleton #siampiwat_demo', text: SHARE_TEXT, files: [file] })
         return
       }
       if (canNativeShare) {
-        await navigator.share({ title: 'Pose Skeleton #demo', text: SHARE_TEXT, url: window.location.origin })
+        await navigator.share({ title: 'Pose Skeleton #siampiwat_demo', text: SHARE_TEXT, url: window.location.origin })
         return
       }
       const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`

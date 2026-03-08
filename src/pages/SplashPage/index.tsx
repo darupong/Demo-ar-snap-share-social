@@ -6,7 +6,7 @@ import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import SplashInstructions from './components/SplashInstructions'
 
-const SHARE_TEXT = 'Color Splash effect สุดเท่ — ฉันมีสี background ขาวดำ! #demo'
+const SHARE_TEXT = 'Color Splash effect สุดเท่ — ฉันมีสี background ขาวดำ! #siampiwat_demo'
 
 const MODES: { value: SplashMode; label: string; desc: string }[] = [
   { value: 'splash', label: '🎨 Color Splash', desc: 'พื้นหลัง grayscale คนมีสี' },
@@ -67,11 +67,11 @@ export default function SplashPage() {
     try {
       const file = new File([blob], 'color-splash.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Color Splash #demo', text: SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Color Splash #siampiwat_demo', text: SHARE_TEXT, files: [file] })
         return
       }
       if (canNativeShare) {
-        await navigator.share({ title: 'Color Splash #demo', text: SHARE_TEXT, url: window.location.origin })
+        await navigator.share({ title: 'Color Splash #siampiwat_demo', text: SHARE_TEXT, url: window.location.origin })
         return
       }
       const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`

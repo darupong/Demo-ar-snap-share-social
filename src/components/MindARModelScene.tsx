@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, type MutableRefObject } from 'react'
 
 export interface MindARModelSceneRef {
   startAR: () => Promise<void>
@@ -31,48 +31,191 @@ interface AFrameSceneElement extends HTMLElement {
   }
 }
 
+/** Return true when the video element is a live camera feed from getUserMedia. */
+function isLiveCameraVideo(video: HTMLVideoElement): boolean {
+  return Boolean(video.srcObject && video.srcObject instanceof MediaStream)
+}
+
 /** Apply fullscreen feed styles to MindAR injected camera and canvas elements. */
 function applyFeedStyles(sceneEl: AFrameSceneElement) {
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+
   const sr = sceneEl.shadowRoot
   if (sr && !sr.getElementById('mindar-model-feed-styles')) {
     const style = document.createElement('style')
     style.id = 'mindar-model-feed-styles'
     style.textContent = `
-      video, canvas {
+      video {
         position: fixed !important;
-        top: 0 !important; left: 0 !important;
-        width: 100% !important; height: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
         min-width: 100% !important; min-height: 100% !important;
         object-fit: cover !important;
         object-position: center center !important;
         box-sizing: border-box !important;
+        display: block !important;
+        z-index: 1 !important;
+      }
+
+      canvas {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100% !important;
+        min-height: 100% !important;
+        object-fit: cover !important;
+        object-position: center center !important;
+        box-sizing: border-box !important;
+        display: block !important;
+        background: transparent !important;
+        z-index: 2 !important;
       }
     `
     sr.appendChild(style)
   }
 
-  const fullBleed: Partial<CSSStyleDeclaration> = {
+  const fullBleedBase: Partial<CSSStyleDeclaration> = {
     position: 'fixed',
     top: '0',
     left: '0',
+    right: '0',
+    bottom: '0',
     width: '100%',
     height: '100%',
+    minWidth: '100%',
+    minHeight: '100%',
     objectFit: 'cover',
     objectPosition: 'center center',
+    display: 'block',
+    boxSizing: 'border-box',
   }
 
-  sceneEl.querySelectorAll<HTMLElement>('video, canvas').forEach((el) => Object.assign(el.style, fullBleed))
+  const cameraFeedStyle: Partial<CSSStyleDeclaration> = {
+    ...fullBleedBase,
+    zIndex: '1',
+    opacity: '1',
+    visibility: 'visible',
+    pointerEvents: 'none',
+    transform: 'none',
+    background: '#000',
+  }
+
+  const overlayCanvasStyle: Partial<CSSStyleDeclaration> = {
+    ...fullBleedBase,
+    zIndex: '2',
+    background: 'transparent',
+    pointerEvents: 'none',
+  }
+
+  Object.assign(sceneEl.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    right: '0',
+    bottom: '0',
+    width: `${viewportWidth}px`,
+    height: `${viewportHeight}px`,
+    overflow: 'hidden',
+    display: 'block',
+    background: 'transparent',
+    zIndex: '2',
+  })
+
+  sceneEl.querySelectorAll<HTMLElement>('video').forEach((el) => Object.assign(el.style, cameraFeedStyle))
+  sceneEl.shadowRoot
+    ?.querySelectorAll<HTMLElement>('video')
+    .forEach((el) => Object.assign(el.style, cameraFeedStyle))
+
+  sceneEl.querySelectorAll<HTMLElement>('canvas').forEach((el) => Object.assign(el.style, overlayCanvasStyle))
+  sceneEl.shadowRoot
+    ?.querySelectorAll<HTMLElement>('canvas')
+    .forEach((el) => Object.assign(el.style, overlayCanvasStyle))
+
+  if (sceneEl.renderer?.domElement) {
+    Object.assign(sceneEl.renderer.domElement.style, overlayCanvasStyle)
+  }
+
+  document.querySelectorAll('video').forEach((el) => {
+    if (el instanceof HTMLVideoElement && isLiveCameraVideo(el)) {
+      Object.assign(el.style, cameraFeedStyle)
+    }
+  })
+
   let parent: HTMLElement | null = sceneEl.parentElement
   while (parent && parent !== document.body) {
     Object.assign(parent.style, {
       position: 'fixed',
       top: '0',
       left: '0',
-      width: '100%',
-      height: '100%',
+      right: '0',
+      bottom: '0',
+      width: `${viewportWidth}px`,
+      height: `${viewportHeight}px`,
       overflow: 'hidden',
+      boxSizing: 'border-box',
+      background: 'transparent',
+      zIndex: '2',
     })
     parent = parent.parentElement
+  }
+}
+
+/** Keep the MindAR scene aligned with mobile viewport changes while AR is running. */
+function startFeedSync(
+  sceneEl: AFrameSceneElement,
+  feedTimersRef: MutableRefObject<ReturnType<typeof setTimeout>[]>,
+  feedLoopRef: MutableRefObject<number | null>,
+  feedObserverRef: MutableRefObject<MutationObserver | null>,
+  cleanupFeedSyncRef: MutableRefObject<(() => void) | null>,
+) {
+  cleanupFeedSyncRef.current?.()
+
+  const apply = () => applyFeedStyles(sceneEl)
+  const handleViewportChange = () => apply()
+
+  apply()
+
+  feedTimersRef.current.forEach(clearTimeout)
+  feedTimersRef.current = [0, 50, 150, 300, 600, 1200].map((ms) => setTimeout(apply, ms))
+
+  const loop = () => {
+    apply()
+    feedLoopRef.current = window.requestAnimationFrame(loop)
+  }
+  feedLoopRef.current = window.requestAnimationFrame(loop)
+
+  const observer = new MutationObserver(apply)
+  observer.observe(sceneEl, { childList: true, subtree: true })
+  feedObserverRef.current = observer
+
+  window.addEventListener('resize', handleViewportChange)
+  window.visualViewport?.addEventListener('resize', handleViewportChange)
+  window.visualViewport?.addEventListener('scroll', handleViewportChange)
+
+  cleanupFeedSyncRef.current = () => {
+    feedTimersRef.current.forEach(clearTimeout)
+    feedTimersRef.current = []
+
+    if (feedLoopRef.current !== null) {
+      window.cancelAnimationFrame(feedLoopRef.current)
+      feedLoopRef.current = null
+    }
+
+    feedObserverRef.current?.disconnect()
+    feedObserverRef.current = null
+
+    window.removeEventListener('resize', handleViewportChange)
+    window.visualViewport?.removeEventListener('resize', handleViewportChange)
+    window.visualViewport?.removeEventListener('scroll', handleViewportChange)
   }
 }
 
@@ -171,6 +314,9 @@ const MindARModelScene = forwardRef<MindARModelSceneRef, MindARModelSceneProps>(
   ) {
     const sceneRef = useRef<AFrameSceneElement | null>(null)
     const feedTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+    const feedLoopRef = useRef<number | null>(null)
+    const feedObserverRef = useRef<MutationObserver | null>(null)
+    const cleanupFeedSyncRef = useRef<(() => void) | null>(null)
 
     const onReadyRef = useRef(onReady)
     const onTargetFoundRef = useRef(onTargetFound)
@@ -202,17 +348,18 @@ const MindARModelScene = forwardRef<MindARModelSceneRef, MindARModelSceneProps>(
       if (!arSystem) throw new Error('AR system not ready')
 
       await arSystem.start()
-      feedTimers.current.forEach(clearTimeout)
-      feedTimers.current = [0, 50, 150, 300, 600, 1200].map((ms) =>
-        setTimeout(() => {
-          if (sceneRef.current) applyFeedStyles(sceneRef.current)
-        }, ms),
+      startFeedSync(
+        sceneEl,
+        feedTimers,
+        feedLoopRef,
+        feedObserverRef,
+        cleanupFeedSyncRef,
       )
     }
 
     /** Stop the MindAR tracking system and clear pending feed style timers. */
     const stopAR = (): void => {
-      feedTimers.current.forEach(clearTimeout)
+      cleanupFeedSyncRef.current?.()
       try {
         sceneRef.current?.systems['mindar-image-system']?.stop()
       } catch {
@@ -260,7 +407,7 @@ const MindARModelScene = forwardRef<MindARModelSceneRef, MindARModelSceneProps>(
       sceneEl.addEventListener('arError', handleARError)
 
       return () => {
-        feedTimers.current.forEach(clearTimeout)
+        cleanupFeedSyncRef.current?.()
         sceneEl.removeEventListener('loaded', handleLoaded)
         sceneEl.removeEventListener('targetFound', handleTargetFound)
         sceneEl.removeEventListener('targetLost', handleTargetLost)
@@ -274,10 +421,12 @@ const MindARModelScene = forwardRef<MindARModelSceneRef, MindARModelSceneProps>(
           sceneRef.current = el as AFrameSceneElement | null
         }}
         mindar-image={`imageTargetSrc: ${imageTargetSrc}; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;`}
+        background="color: transparent"
         color-space="sRGB"
         renderer="colorManagement: true; antialias: true; preserveDrawingBuffer: true; alpha: true"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
+        embedded
       >
         <a-camera position="0 0 0" look-controls="enabled: false" />
         <a-entity mindar-image-target="targetIndex: 0">

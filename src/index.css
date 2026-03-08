@@ -78,6 +78,13 @@
     box-sizing: border-box;
   }
 
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-height: 100%;
+  }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -91,6 +98,70 @@
 body.ar-active {
   overflow: hidden;
   position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+}
+
+body.ar-active #root {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
+.crab-tracking-page {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+  background: transparent;
+}
+
+.crab-tracking-page a-scene {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: -webkit-fill-available !important;
+  display: block !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.crab-tracking-page a-scene canvas,
+.crab-tracking-page a-scene video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  display: block !important;
+  z-index: 1 !important;
+}
+
+.crab-tracking-page a-scene canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  display: block !important;
+  background: transparent !important;
+  z-index: 2 !important;
 }

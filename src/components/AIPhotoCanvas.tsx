@@ -14,19 +14,37 @@ const AIPhotoCanvas = forwardRef<AIPhotoCanvasRef, AIPhotoCanvasProps>(
     const videoRef = useRef<HTMLVideoElement>(null)
     const isInitRef = useRef(false)
 
-    // Capture current frame as base64 data URL
+    /** Capture current frame as base64 data URL, cropped to 9:16 aspect ratio (portrait). */
     const captureImage = useCallback(async (): Promise<string | null> => {
       const video = videoRef.current
       if (!video || video.readyState < 2) return null
 
+      const vW = video.videoWidth
+      const vH = video.videoHeight
+      if (!vW || !vH) return null
+
       try {
+        const aspect = 9 / 16
+        let sx: number, sy: number, sW: number, sH: number
+        if (vW / vH > aspect) {
+          sW = Math.round(vH * aspect)
+          sH = vH
+          sx = (vW - sW) / 2
+          sy = 0
+        } else {
+          sW = vW
+          sH = Math.round(vW / aspect)
+          sx = 0
+          sy = (vH - sH) / 2
+        }
+
         const canvas = document.createElement('canvas')
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
+        canvas.width = sW
+        canvas.height = sH
         const ctx = canvas.getContext('2d')
         if (!ctx) return null
 
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        ctx.drawImage(video, sx, sy, sW, sH, 0, 0, sW, sH)
         return canvas.toDataURL('image/jpeg', 0.9)
       } catch {
         return null
@@ -49,8 +67,9 @@ const AIPhotoCanvas = forwardRef<AIPhotoCanvasRef, AIPhotoCanvasProps>(
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: 'user',
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
+              width: { ideal: 720 },
+              height: { ideal: 1280 },
+              aspectRatio: { ideal: 9 / 16 },
             },
             audio: false,
           })

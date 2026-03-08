@@ -15,64 +15,7 @@ import AIPhotoCanvas, { type AIPhotoCanvasRef } from '@/components/AIPhotoCanvas
 import { ROUTES } from '@/constants'
 import AIPhotoInstructions from './components/AIPhotoInstructions'
 
-const SHARE_TEXT = 'สร้างภาพศิลปะด้วย AI — ลองเล่นกันเลย! #demo #AIPhoto'
-const DAILY_LIMIT_KEY = 'ai_photo_daily_limit'
-const MAX_DAILY_USES = 1
-
-interface DailyLimitData {
-  date: string
-  count: number
-}
-
-/** Check if user can generate AI photo today */
-function checkDailyLimit(): { canUse: boolean; remainingUses: number } {
-  const today = new Date().toLocaleDateString('th-TH')
-  const stored = localStorage.getItem(DAILY_LIMIT_KEY)
-
-  if (!stored) {
-    return { canUse: true, remainingUses: MAX_DAILY_USES }
-  }
-
-  try {
-    const data: DailyLimitData = JSON.parse(stored)
-    
-    // Reset count if it's a new day
-    if (data.date !== today) {
-      return { canUse: true, remainingUses: MAX_DAILY_USES }
-    }
-
-    // Check if limit exceeded
-    if (data.count >= MAX_DAILY_USES) {
-      return { canUse: false, remainingUses: 0 }
-    }
-
-    return { canUse: true, remainingUses: MAX_DAILY_USES - data.count }
-  } catch {
-    return { canUse: true, remainingUses: MAX_DAILY_USES }
-  }
-}
-
-/** Increment daily usage count */
-function incrementDailyUsage(): void {
-  const today = new Date().toLocaleDateString('th-TH')
-  const stored = localStorage.getItem(DAILY_LIMIT_KEY)
-
-  let data: DailyLimitData = { date: today, count: 0 }
-
-  if (stored) {
-    try {
-      const parsed: DailyLimitData = JSON.parse(stored)
-      if (parsed.date === today) {
-        data.count = parsed.count
-      }
-    } catch {
-      // Reset if parse error
-    }
-  }
-
-  data.count += 1
-  localStorage.setItem(DAILY_LIMIT_KEY, JSON.stringify(data))
-}
+const SHARE_TEXT = 'สร้างภาพศิลปะด้วย AI — ลองเล่นกันเลย! #siampiwat_demo #AIPhoto'
 
 /** Generate AI photo via Vercel serverless function */
 async function generateAIPhoto(imageBase64: string): Promise<string> {
@@ -112,29 +55,17 @@ export default function AIPhotoPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [remainingUses, setRemainingUses] = useState(MAX_DAILY_USES)
 
   const canNativeShare =
     typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
 
   useEffect(() => {
     document.body.classList.add('ar-active')
-    // Check daily limit on mount
-    const { remainingUses: remaining } = checkDailyLimit()
-    setRemainingUses(remaining)
     return () => document.body.classList.remove('ar-active')
   }, [])
 
   const handleCapture = useCallback(async () => {
     if (!canvasRef.current || isCapturing) return
-
-    // Check daily limit before capturing
-    const { canUse } = checkDailyLimit()
-    if (!canUse) {
-      setErrorMsg('คุณใช้งานครบโควต้าวันนี้แล้ว (1 ครั้ง/วัน) กรุณากลับมาใช้งานใหม่พรุ่งนี้')
-      setTimeout(() => setErrorMsg(null), 5000)
-      return
-    }
 
     setIsCapturing(true)
     try {
@@ -159,10 +90,6 @@ export default function AIPhotoPage() {
     try {
       const aiImageUrl = await generateAIPhoto(imageData)
       setAiGeneratedImage(aiImageUrl)
-      // Increment usage count after successful generation
-      incrementDailyUsage()
-      const { remainingUses: remaining } = checkDailyLimit()
-      setRemainingUses(remaining)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'ไม่สามารถสร้างภาพ AI ได้'
       setErrorMsg(msg)
@@ -243,16 +170,6 @@ export default function AIPhotoPage() {
         <p className="text-xs text-gray-300 text-center max-w-md">
           ถ่ายรูปตัวเองแล้วให้ AI แปลงเป็นภาพศิลปะธีมธรรมชาติแฟนตาซี
         </p>
-        {/* Daily limit indicator */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
-          <span className="text-xs text-purple-300">
-            {remainingUses > 0 ? (
-              <>เหลือ {remainingUses}/{MAX_DAILY_USES} ครั้งวันนี้</>
-            ) : (
-              <>ใช้งานครบโควต้าวันนี้แล้ว</>
-            )}
-          </span>
-        </div>
       </div>
 
       {!capturedImage && <AIPhotoCanvas ref={canvasRef} onReady={handleReady} onError={handleError} />}
@@ -340,7 +257,7 @@ export default function AIPhotoPage() {
             <button
               type="button"
               onClick={handleCapture}
-              disabled={isCapturing || isGenerating || remainingUses === 0}
+              disabled={isCapturing || isGenerating}
               className="relative w-16 h-16 rounded-full bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/50 disabled:opacity-60 transition-transform active:scale-95"
             >
               {isCapturing || isGenerating ? (

@@ -6,7 +6,7 @@ import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import DrawInstructions from './components/DrawInstructions'
 
-const SHARE_TEXT = 'วาดรูปในอากาศด้วยนิ้วมือ! Air Drawing สุดล้ำ #demo'
+const SHARE_TEXT = 'วาดรูปในอากาศด้วยนิ้วมือ! Air Drawing สุดล้ำ #siampiwat_demo'
 
 const PALETTE = [
   { color: '#22d3ee', label: 'ฟ้า' },
@@ -80,11 +80,11 @@ export default function DrawPage() {
     try {
       const file = new File([blob], 'air-drawing.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Air Drawing #demo', text: SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Air Drawing #siampiwat_demo', text: SHARE_TEXT, files: [file] })
         return
       }
       if (canNativeShare) {
-        await navigator.share({ title: 'Air Drawing #demo', text: SHARE_TEXT, url: window.location.origin })
+        await navigator.share({ title: 'Air Drawing #siampiwat_demo', text: SHARE_TEXT, url: window.location.origin })
         return
       }
       const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`

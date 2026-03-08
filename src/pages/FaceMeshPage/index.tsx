@@ -85,7 +85,7 @@ export default function FaceMeshPage() {
       const file = new File([blob], 'facemesh.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'Face Mesh #demo',
+          title: 'Face Mesh #siampiwat_demo',
           text: FACEMESH_SHARE_TEXT,
           files: [file],
         })
@@ -93,7 +93,7 @@ export default function FaceMeshPage() {
       }
       if (canNativeShare) {
         await navigator.share({
-          title: 'Face Mesh #demo',
+          title: 'Face Mesh #siampiwat_demo',
           text: FACEMESH_SHARE_TEXT,
           url: window.location.origin,
         })
@@ -283,7 +283,7 @@ export default function FaceMeshPage() {
                     color: currentPreset.color,
                   }}
                 >
-                  {currentPreset.emoji} {currentPreset.label} #demo
+                  {currentPreset.emoji} {currentPreset.label} #siampiwat_demo
                 </span>
               </div>
             )}

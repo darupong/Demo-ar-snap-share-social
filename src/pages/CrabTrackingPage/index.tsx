@@ -14,12 +14,11 @@ import {
   ScanLine,
   Box,
 } from 'lucide-react'
-import MindARModelScene, { type MindARModelSceneRef } from '@/components/MindARModelScene'
 import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import CrabTrackingInstructions from './components/CrabTrackingInstructions'
 
-const SHARE_TEXT = 'ส่อง target image แล้วเห็นปู 3D ลอยขึ้นมาแบบ AR! #demo'
+const SHARE_TEXT = 'ส่อง target image แล้วเห็นปู 3D ลอยขึ้นมาแบบ AR! #siampiwat_demo'
 
 const CRAB_MOTION_PRESETS = [
   {
@@ -78,6 +77,17 @@ let mindarScriptsPromise: Promise<void> | null = null
 
 type ARState = 'idle' | 'starting' | 'started'
 
+interface AFrameSceneElement extends HTMLElement {
+  hasLoaded: boolean
+  renderer?: { domElement: HTMLCanvasElement }
+  systems: {
+    'mindar-image-system'?: {
+      start: () => Promise<void>
+      stop: () => void
+    }
+  }
+}
+
 /** Load MindAR and A-Frame CDN scripts once and reuse the same promise across mounts. */
 function loadMindarScripts(): Promise<void> {
   if (mindarScriptsPromise) return mindarScriptsPromise
@@ -105,10 +115,213 @@ function loadMindarScripts(): Promise<void> {
   return mindarScriptsPromise
 }
 
+/** Wait for the next two animation frames so the AR canvas finishes rendering. */
+function waitForRender(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+}
+
+/** Collect all video and canvas nodes inside the container, including shadow DOM. */
+function getMediaInContainer(container: HTMLElement): { videos: HTMLElement[]; canvases: HTMLElement[] } {
+  const videos: HTMLElement[] = []
+  const canvases: HTMLElement[] = []
+
+  const walk = (element: Element) => {
+    if (element instanceof HTMLVideoElement) videos.push(element)
+    if (element instanceof HTMLCanvasElement) canvases.push(element)
+
+    const host = element as HTMLElement
+    if (host.shadowRoot) {
+      Array.from(host.shadowRoot.children).forEach((child) => walk(child))
+    }
+
+    Array.from(element.children).forEach((child) => walk(child))
+  }
+
+  walk(container)
+  return { videos, canvases }
+}
+
+/** Inject fixed fullscreen styles into the A-Frame shadow DOM. */
+function injectShadowStyles(container: HTMLElement) {
+  const scene = container.querySelector('a-scene') as HTMLElement | null
+  const shadowRoot = scene?.shadowRoot
+  if (!shadowRoot) return
+
+  const styleId = 'crab-tracking-fullbleed-styles'
+  if (shadowRoot.getElementById(styleId)) return
+
+  const style = document.createElement('style')
+  style.id = styleId
+  style.textContent = `
+    video, canvas {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 100% !important;
+      min-height: 100% !important;
+      object-fit: cover !important;
+      object-position: center center !important;
+      box-sizing: border-box !important;
+      display: block !important;
+    }
+  `
+  shadowRoot.appendChild(style)
+}
+
+/** Apply the same fullscreen camera-feed treatment used by the reference project. */
+function applyCameraFeedStyles(container: HTMLElement) {
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+
+  container.style.width = `${viewportWidth}px`
+  container.style.height = `${viewportHeight}px`
+  injectShadowStyles(container)
+
+  const { videos, canvases } = getMediaInContainer(container)
+  const toKebab = (value: string) => value.replace(/([A-Z])/g, (_, char) => `-${char.toLowerCase()}`)
+
+  const setStyle = (
+    element: HTMLElement,
+    style: Record<string, string>,
+    useImportant = false,
+  ) => {
+    Object.entries(style).forEach(([key, value]) => {
+      element.style.setProperty(toKebab(key), value, useImportant ? 'important' : '')
+    })
+  }
+
+  const fullBleedStyle: Record<string, string> = {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    right: '0',
+    bottom: '0',
+    width: '100%',
+    height: '100%',
+    minWidth: '100%',
+    minHeight: '100%',
+    objectFit: 'cover',
+    objectPosition: 'center center',
+    display: 'block',
+    background: 'transparent',
+  }
+
+  const parentFullStyle: Record<string, string> = {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    right: '0',
+    bottom: '0',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    background: 'transparent',
+  }
+
+  ;[...videos, ...canvases].forEach((element) => {
+    setStyle(element, fullBleedStyle, true)
+    let parent: HTMLElement | null = element.parentElement
+    while (parent && parent !== container) {
+      setStyle(parent, parentFullStyle, true)
+      parent = parent.parentElement
+    }
+  })
+}
+
+/** Capture the camera feed and WebGL canvas into one PNG image. */
+async function compositeCapture(
+  container: HTMLElement,
+  sceneEl: AFrameSceneElement,
+): Promise<string | null> {
+  await waitForRender()
+
+  const width = window.innerWidth
+  const height = window.innerHeight
+  const glCanvas = sceneEl.renderer?.domElement
+
+  const offscreen = document.createElement('canvas')
+  offscreen.width = width
+  offscreen.height = height
+
+  const ctx = offscreen.getContext('2d')
+  if (!ctx) return null
+
+  const { videos } = getMediaInContainer(container)
+  let cameraVideo: HTMLVideoElement | null = null
+
+  videos.forEach((video) => {
+    if (!cameraVideo && video instanceof HTMLVideoElement && video.readyState >= 2) {
+      cameraVideo = video
+    }
+  })
+
+  if (!cameraVideo) {
+    document.querySelectorAll('video').forEach((video) => {
+      if (!cameraVideo && video instanceof HTMLVideoElement && video.readyState >= 2) {
+        cameraVideo = video
+      }
+    })
+  }
+
+  let drewCamera = false
+  if (cameraVideo) {
+    try {
+      const videoElement = cameraVideo as HTMLVideoElement
+      const videoWidth = videoElement.videoWidth || width
+      const videoHeight = videoElement.videoHeight || height
+      const scale = Math.max(width / videoWidth, height / videoHeight)
+      const drawWidth = videoWidth * scale
+      const drawHeight = videoHeight * scale
+      ctx.drawImage(
+        videoElement,
+        (width - drawWidth) / 2,
+        (height - drawHeight) / 2,
+        drawWidth,
+        drawHeight,
+      )
+      drewCamera = true
+    } catch {
+      // Ignore camera draw issues and fall back to the WebGL canvas below.
+    }
+  }
+
+  if (glCanvas) {
+    try {
+      ctx.drawImage(glCanvas, 0, 0, width, height)
+    } catch {
+      // Ignore WebGL draw issues and keep the fallback path below.
+    }
+  }
+
+  try {
+    const url = offscreen.toDataURL('image/png', 0.95)
+    if ((url.split(',')[1]?.length ?? 0) > 200) return url
+  } catch {
+    // Fall through to WebGL-only fallback below.
+  }
+
+  if (!drewCamera && glCanvas) {
+    try {
+      const url = glCanvas.toDataURL('image/png', 0.95)
+      return (url.split(',')[1]?.length ?? 0) > 200 ? url : null
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
 /** Render the Crab Tracking page that places a GLTF crab model on top of an image target. */
 export default function CrabTrackingPage() {
   const navigate = useNavigate()
-  const sceneRef = useRef<MindARModelSceneRef>(null)
+  const sceneRef = useRef<AFrameSceneElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   const [scriptsReady, setScriptsReady] = useState(false)
   const [arState, setArState] = useState<ARState>('idle')
@@ -133,6 +346,28 @@ export default function CrabTrackingPage() {
     setTimeout(() => setErrorMsg(null), 5000)
   }
 
+  /** Stop the MindAR scene when leaving the page or tapping the home button. */
+  const stopAR = useCallback(() => {
+    try {
+      sceneRef.current?.systems['mindar-image-system']?.stop()
+    } catch {
+      // Ignore stop errors from already-disposed scenes.
+    }
+  }, [])
+
+  /** Re-apply fullscreen media styles to the AR container. */
+  const applyFeedLayout = useCallback(() => {
+    if (containerRef.current) {
+      applyCameraFeedStyles(containerRef.current)
+    }
+  }, [])
+
+  /** Capture the current camera frame with the AR model overlay. */
+  const captureSceneImage = useCallback(async () => {
+    if (!containerRef.current || !sceneRef.current) return null
+    return compositeCapture(containerRef.current, sceneRef.current)
+  }, [])
+
   useEffect(() => {
     document.body.classList.add('ar-active')
     loadMindarScripts()
@@ -141,9 +376,9 @@ export default function CrabTrackingPage() {
 
     return () => {
       document.body.classList.remove('ar-active')
-      sceneRef.current?.stopAR()
+      stopAR()
     }
-  }, [])
+  }, [stopAR])
 
   useEffect(() => {
     const handler = (event: PromiseRejectionEvent) => {
@@ -160,6 +395,78 @@ export default function CrabTrackingPage() {
     window.addEventListener('unhandledrejection', handler)
     return () => window.removeEventListener('unhandledrejection', handler)
   }, [])
+
+  useEffect(() => {
+    const sceneEl = sceneRef.current
+    if (!scriptsReady || !sceneEl) return
+
+    /** Mark the AR page ready once A-Frame has finished booting. */
+    const handleLoaded = () => setIsARReady(true)
+
+    /** Reflect target detection state in the overlay badge. */
+    const handleTargetFound = () => setTargetFound(true)
+
+    /** Reflect target loss state in the overlay badge. */
+    const handleTargetLost = () => setTargetFound(false)
+
+    /** Translate low-level MindAR errors into a friendly Thai message. */
+    const handleARError = (event: Event) => {
+      console.error('MindAR model error', (event as CustomEvent).detail)
+      showError('AR เกิดข้อผิดพลาด กรุณาลองรีเฟรช')
+    }
+
+    if (sceneEl.hasLoaded) handleLoaded()
+    else sceneEl.addEventListener('loaded', handleLoaded)
+
+    sceneEl.addEventListener('targetFound', handleTargetFound)
+    sceneEl.addEventListener('targetLost', handleTargetLost)
+    sceneEl.addEventListener('arError', handleARError)
+
+    return () => {
+      sceneEl.removeEventListener('loaded', handleLoaded)
+      sceneEl.removeEventListener('targetFound', handleTargetFound)
+      sceneEl.removeEventListener('targetLost', handleTargetLost)
+      sceneEl.removeEventListener('arError', handleARError)
+    }
+  }, [scriptsReady])
+
+  useEffect(() => {
+    if (arState !== 'started') return
+
+    applyFeedLayout()
+
+    const delayed = [0, 50, 150, 300, 500, 1000].map((ms) => setTimeout(applyFeedLayout, ms))
+    const observer = new MutationObserver(() => applyFeedLayout())
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current, { childList: true, subtree: true })
+    }
+
+    let rafId = 0
+    const loop = () => {
+      applyFeedLayout()
+      rafId = requestAnimationFrame(loop)
+    }
+    rafId = requestAnimationFrame(loop)
+
+    /** Keep the camera feed aligned when the mobile browser viewport changes. */
+    const handleViewportResize = () => applyFeedLayout()
+    window.visualViewport?.addEventListener('resize', handleViewportResize)
+    window.visualViewport?.addEventListener('scroll', handleViewportResize)
+
+    return () => {
+      delayed.forEach(clearTimeout)
+      cancelAnimationFrame(rafId)
+      observer.disconnect()
+      window.visualViewport?.removeEventListener('resize', handleViewportResize)
+      window.visualViewport?.removeEventListener('scroll', handleViewportResize)
+
+      if (containerRef.current) {
+        containerRef.current.style.width = ''
+        containerRef.current.style.height = ''
+      }
+    }
+  }, [arState, applyFeedLayout])
 
   /** Ask for camera access, verify target files, then start MindAR tracking. */
   const handleStartAR = async () => {
@@ -207,7 +514,11 @@ export default function CrabTrackingPage() {
     }
 
     try {
-      await sceneRef.current?.startAR()
+      const arSystem = sceneRef.current?.systems['mindar-image-system']
+      if (!arSystem) throw new Error('AR system not ready')
+
+      await arSystem.start()
+      applyFeedLayout()
       setArState('started')
     } catch (error) {
       setArState('idle')
@@ -222,11 +533,11 @@ export default function CrabTrackingPage() {
 
   /** Capture the current AR composite image and open the preview modal. */
   const handleCapture = useCallback(async () => {
-    if (!sceneRef.current || isCapturing || arState !== 'started') return
+    if (!sceneRef.current || !containerRef.current || isCapturing || arState !== 'started') return
 
     setIsCapturing(true)
     try {
-      const imageData = await sceneRef.current.captureImage()
+      const imageData = await captureSceneImage()
       if (imageData) {
         setCapturedImage(imageData)
         setShowPreview(true)
@@ -236,7 +547,7 @@ export default function CrabTrackingPage() {
     } finally {
       setIsCapturing(false)
     }
-  }, [isCapturing, arState])
+  }, [captureSceneImage, isCapturing, arState])
 
   /** Download the captured AR image as a PNG file. */
   const handleDownload = useCallback(() => {
@@ -259,13 +570,13 @@ export default function CrabTrackingPage() {
     try {
       const file = new File([blob], 'crab-tracking-ar.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: 'Crab Tracking AR #demo', text: SHARE_TEXT, files: [file] })
+        await navigator.share({ title: 'Crab Tracking AR #siampiwat_demo', text: SHARE_TEXT, files: [file] })
         return
       }
 
       if (canNativeShare) {
         await navigator.share({
-          title: 'Crab Tracking AR #demo',
+          title: 'Crab Tracking AR #siampiwat_demo',
           text: SHARE_TEXT,
           url: window.location.origin,
         })
@@ -288,22 +599,51 @@ export default function CrabTrackingPage() {
     CRAB_MOTION_PRESETS.find((preset) => preset.id === motionPresetId) ?? CRAB_MOTION_PRESETS[0]
 
   return (
-    <div className="relative overflow-hidden bg-black" style={{ width: '100vw', height: '100vh' }}>
+    <div
+      ref={containerRef}
+      className="crab-tracking-page relative"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#000',
+        zIndex: 1,
+      }}
+    >
       {scriptsReady && (
-        <MindARModelScene
-          ref={sceneRef}
-          imageTargetSrc="/target/targets.mind"
-          modelSrc="/3d/Crab/scene.gltf"
-          modelPosition={currentMotionPreset.modelPosition}
-          modelRotation={currentMotionPreset.modelRotation}
-          modelScale={currentMotionPreset.modelScale}
-          modelAnimationPosition={currentMotionPreset.modelAnimationPosition}
-          modelAnimationRotation={currentMotionPreset.modelAnimationRotation}
-          onReady={() => setIsARReady(true)}
-          onTargetFound={() => setTargetFound(true)}
-          onTargetLost={() => setTargetFound(false)}
-          onError={showError}
-        />
+        <a-scene
+          ref={(element: unknown) => {
+            sceneRef.current = element as AFrameSceneElement | null
+          }}
+          mindar-image="imageTargetSrc: /target/targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
+          color-space="sRGB"
+          renderer="colorManagement: true; antialias: true; preserveDrawingBuffer: true; alpha: true"
+          vr-mode-ui="enabled: false"
+          device-orientation-permission-ui="enabled: false"
+          embedded
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            display: 'block',
+            background: 'transparent',
+          }}
+        >
+          <a-camera position="0 0 0" look-controls="enabled: false" />
+          <a-entity mindar-image-target="targetIndex: 0">
+            <a-entity
+              gltf-model="url(/3d/Crab/scene.gltf)"
+              position={currentMotionPreset.modelPosition}
+              rotation={currentMotionPreset.modelRotation}
+              scale={currentMotionPreset.modelScale}
+              animation__position={currentMotionPreset.modelAnimationPosition}
+              animation__rotation={currentMotionPreset.modelAnimationRotation}
+            />
+          </a-entity>
+        </a-scene>
       )}
 
       {arState !== 'started' && (
@@ -382,7 +722,12 @@ export default function CrabTrackingPage() {
           className="fixed inset-0 flex flex-col justify-between pointer-events-none"
           style={{ zIndex: 10 }}
         >
-          <div className="flex items-center justify-between px-4 pt-4">
+          <div
+            className="flex items-center justify-between px-4"
+            style={{
+              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)',
+            }}
+          >
             <div>
               {errorMsg ? (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/50 backdrop-blur-sm">
@@ -424,7 +769,12 @@ export default function CrabTrackingPage() {
             </div>
           )}
 
-          <div className="pb-10 px-8 pointer-events-auto">
+          <div
+            className="px-8 pointer-events-auto"
+            style={{
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2.5rem)',
+            }}
+          >
             <div className="flex items-center justify-center gap-2 overflow-x-auto py-2 max-w-full mb-4">
               {CRAB_MOTION_PRESETS.map((preset) => {
                 const isSelected = motionPresetId === preset.id
@@ -447,7 +797,7 @@ export default function CrabTrackingPage() {
             <div className="flex items-center justify-between max-w-xs mx-auto">
               <button
                 onClick={() => {
-                  sceneRef.current?.stopAR()
+                  stopAR()
                   navigate(ROUTES.HOME)
                 }}
                 className="w-12 h-12 rounded-full bg-black/50 border border-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 active:scale-95 transition-all"
@@ -498,7 +848,7 @@ export default function CrabTrackingPage() {
             </div>
             <div className="flex justify-center mb-4">
               <span className="px-3 py-1 rounded-full text-sm font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
-                {currentMotionPreset.emoji} {currentMotionPreset.label} #demo
+                {currentMotionPreset.emoji} {currentMotionPreset.label} #siampiwat_demo
               </span>
             </div>
             <div className="flex gap-3 mb-3">

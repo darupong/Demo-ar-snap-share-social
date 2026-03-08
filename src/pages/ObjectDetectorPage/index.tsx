@@ -7,7 +7,7 @@ import { dataURLtoBlob } from '@/lib/image'
 import ObjectDetectorInstructions from './components/ObjectDetectorInstructions'
 
 const SHARE_TEXT =
-  'สนุกกับ AR Object Detector แบบมีกล่องล้อมวัตถุ — ส่องของรอบตัวแล้วแชร์ให้เพื่อนดู! #demo'
+  'สนุกกับ AR Object Detector แบบมีกล่องล้อมวัตถุ — ส่องของรอบตัวแล้วแชร์ให้เพื่อนดู! #siampiwat_demo'
 
 /** Page for bounding-box object detection demo using MediaPipe ObjectDetector */
 export default function ObjectDetectorPage() {

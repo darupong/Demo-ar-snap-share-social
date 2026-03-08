@@ -1,7 +1,7 @@
 import type { FaceEffect } from '@/components/FaceMeshCanvas'
 
 /** Share text for Face Mesh when sharing to social */
-export const FACEMESH_SHARE_TEXT = 'ลอง Face Effect จาก MediaPipe กัน! ✨ #demo'
+export const FACEMESH_SHARE_TEXT = 'ลอง Face Effect จาก MediaPipe กัน! ✨ #siampiwat_demo'
 
 export interface FaceEffectPreset {
   effect: FaceEffect

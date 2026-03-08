@@ -70,7 +70,7 @@ export default function ARPage() {
       const file = new File([blob], 'ar-snap-demo.png', { type: 'image/png' })
       if (canNativeShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'AR Snap #demo',
+          title: 'AR Snap #siampiwat_demo',
           text: AR_SHARE_TEXT,
           files: [file],
         })
@@ -78,7 +78,7 @@ export default function ARPage() {
       }
       if (canNativeShare) {
         await navigator.share({
-          title: 'AR Snap #demo',
+          title: 'AR Snap #siampiwat_demo',
           text: AR_SHARE_TEXT,
           url: window.location.origin,
         })
@@ -246,7 +246,7 @@ export default function ARPage() {
             {/* Hashtag badge */}
             <div className="flex justify-center mb-4">
               <span className="px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-sm font-medium">
-                #demo
+                #siampiwat_demo
               </span>
             </div>
 
