@@ -7,6 +7,7 @@ import FaceMeshPage from '@/pages/FaceMeshPage'
 import ObjectDetectPage from '@/pages/ObjectDetectPage'
 import ObjectDetectorPage from '@/pages/ObjectDetectorPage'
 import AIPhotoPage from '@/pages/AIPhotoPage'
+import AIPhotoMockupPage from '@/pages/AIPhotoMockupPage'
 import PosePage from '@/pages/PosePage'
 import DrawPage from '@/pages/DrawPage'
 import GesturePage from '@/pages/GesturePage'
@@ -24,6 +25,7 @@ export default function App() {
       <Route path={ROUTES.OBJECTS} element={<ObjectDetectPage />} />
       <Route path={ROUTES.OBJECTS_DETECTOR} element={<ObjectDetectorPage />} />
       <Route path={ROUTES.AIPHOTO} element={<AIPhotoPage />} />
+      <Route path={ROUTES.AIPHOTO_MOCKUP} element={<AIPhotoMockupPage />} />
       <Route path={ROUTES.POSE} element={<PosePage />} />
       <Route path={ROUTES.DRAW} element={<DrawPage />} />
       <Route path={ROUTES.GESTURE} element={<GesturePage />} />

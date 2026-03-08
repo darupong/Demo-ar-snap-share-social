@@ -10,7 +10,9 @@ import {
   AlertCircle,
   Facebook,
   Loader2,
+  Gift,
 } from 'lucide-react'
+import SpinWheelCoupon from '@/components/SpinWheelCoupon'
 import FaceMeshCanvas, {
   FaceMeshCanvasRef,
   type FaceEffect,
@@ -33,6 +35,8 @@ export default function FaceMeshPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
+  const [showSpinWheel, setShowSpinWheel] = useState(false)
+  const [hasSpun, setHasSpun] = useState(false)
 
   const canNativeShare =
     typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
@@ -287,6 +291,18 @@ export default function FaceMeshPage() {
                 </span>
               </div>
             )}
+            <button
+              onClick={() => setShowSpinWheel(true)}
+              disabled={hasSpun}
+              className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 mb-4 transition-all ${
+                hasSpun
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-linear-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-amber-500/30 active:scale-[0.98]'
+              }`}
+            >
+              <Gift size={20} />
+              {hasSpun ? 'ใช้คูปองแล้ว' : 'สุ่มคูปอง'}
+            </button>
             <div className="flex gap-3 mb-3">
               <button
                 onClick={handleDownload}
@@ -332,6 +348,12 @@ export default function FaceMeshPage() {
           onClose={() => setShowInstructions(false)}
         />
       </div>
+
+      <SpinWheelCoupon
+        open={showSpinWheel}
+        onClose={() => setShowSpinWheel(false)}
+        onSpun={() => setHasSpun(true)}
+      />
     </div>
   )
 }

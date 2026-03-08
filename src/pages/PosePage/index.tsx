@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, Camera, Info, Download, Share2, X, AlertCircle, Facebook, PersonStanding } from 'lucide-react'
+import { Home, Camera, Info, Download, Share2, X, AlertCircle, Facebook, PersonStanding, Gift } from 'lucide-react'
 import PoseCanvas, { type PoseCanvasRef } from '@/components/PoseCanvas'
+import SpinWheelCoupon from '@/components/SpinWheelCoupon'
 import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import PoseInstructions from './components/PoseInstructions'
@@ -20,6 +21,8 @@ export default function PosePage() {
   const [isCapturing, setIsCapturing] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [showSpinWheel, setShowSpinWheel] = useState(false)
+  const [hasSpun, setHasSpun] = useState(false)
 
   const canNativeShare =
     typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
@@ -203,9 +206,21 @@ export default function PosePage() {
               <X size={16} />
             </button>
             <h2 className="text-white font-bold text-xl mb-4">Pose Skeleton Snap!</h2>
-            <div className="rounded-2xl overflow-hidden border border-violet-500/20 mb-5">
+            <div className="rounded-2xl overflow-hidden border border-violet-500/20 mb-4">
               <img src={capturedImage} alt="Pose Snapshot" className="w-full h-auto" />
             </div>
+            <button
+              onClick={() => setShowSpinWheel(true)}
+              disabled={hasSpun}
+              className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 mb-4 transition-all ${
+                hasSpun
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-linear-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-amber-500/30 active:scale-[0.98]'
+              }`}
+            >
+              <Gift size={20} />
+              {hasSpun ? 'ใช้คูปองแล้ว' : 'สุ่มคูปอง'}
+            </button>
             <div className="flex gap-3 mb-3">
               <button
                 onClick={handleDownload}
@@ -236,6 +251,12 @@ export default function PosePage() {
           </div>
         </div>
       )}
+
+      <SpinWheelCoupon
+        open={showSpinWheel}
+        onClose={() => setShowSpinWheel(false)}
+        onSpun={() => setHasSpun(true)}
+      />
 
       <div style={{ zIndex: 40 }}>
         <PoseInstructions open={showInstructions} onClose={() => setShowInstructions(false)} />

@@ -7,6 +7,7 @@ export const ROUTES = {
   OBJECTS: '/objects',
   OBJECTS_DETECTOR: '/objects-detector',
   AIPHOTO: '/aiphoto',
+  AIPHOTO_MOCKUP: '/aiphoto-mockup',
   POSE: '/pose',
   DRAW: '/draw',
   GESTURE: '/gesture',

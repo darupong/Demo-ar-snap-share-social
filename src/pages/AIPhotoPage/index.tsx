@@ -10,8 +10,10 @@ import {
   AlertCircle,
   Sparkles,
   Loader2,
+  Gift,
 } from 'lucide-react'
 import AIPhotoCanvas, { type AIPhotoCanvasRef } from '@/components/AIPhotoCanvas'
+import SpinWheelCoupon from '@/components/SpinWheelCoupon'
 import { ROUTES } from '@/constants'
 import AIPhotoInstructions from './components/AIPhotoInstructions'
 
@@ -55,6 +57,8 @@ export default function AIPhotoPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [showSpinWheel, setShowSpinWheel] = useState(false)
+  const [hasSpun, setHasSpun] = useState(false)
 
   const canNativeShare =
     typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
@@ -274,6 +278,15 @@ export default function AIPhotoPage() {
             >
               <Share2 size={18} />
             </button>
+            <button
+              type="button"
+              onClick={() => setShowSpinWheel(true)}
+              disabled={!aiGeneratedImage || hasSpun}
+              className="w-10 h-10 rounded-full border border-amber-400/60 bg-black/60 flex items-center justify-center text-amber-300 hover:bg-amber-500/10 disabled:opacity-40 disabled:hover:bg-black/60 transition-colors"
+              title={hasSpun ? 'ใช้คูปองแล้ว' : 'สุ่มคูปอง'}
+            >
+              <Gift size={18} />
+            </button>
           </div>
         </div>
       </div>
@@ -281,6 +294,12 @@ export default function AIPhotoPage() {
       {showInstructions && (
         <AIPhotoInstructions open={showInstructions} onClose={() => setShowInstructions(false)} />
       )}
+
+      <SpinWheelCoupon
+        open={showSpinWheel}
+        onClose={() => setShowSpinWheel(false)}
+        onSpun={() => setHasSpun(true)}
+      />
     </div>
   )
 }

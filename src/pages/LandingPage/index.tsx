@@ -458,6 +458,19 @@ export default function LandingPage() {
                 </div>
                 <div className="w-full flex items-center gap-1 text-purple-400 text-xs font-medium">เริ่มเลย <ChevronRight size={12} /></div>
               </button>
+              <button
+                onClick={() => navigate(ROUTES.AIPHOTO_MOCKUP)}
+                className={`${demoBtnClass} border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500/60`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Film size={22} className="text-white" />
+                </div>
+                <div className="w-full">
+                  <p className="text-white font-semibold text-sm">🎬 AI Photo Mockup</p>
+                  <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">แบบจำลองถ่ายรูป รอ gen หลอก 5 วินาที แสดงภาพ+วิดีโอ</p>
+                </div>
+                <div className="w-full flex items-center gap-1 text-amber-400 text-xs font-medium">เริ่มเลย <ChevronRight size={12} /></div>
+              </button>
             </div>
           </section>
         </div>

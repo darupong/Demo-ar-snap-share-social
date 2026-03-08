@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, Camera, Info, Download, Share2, X, AlertCircle, Facebook, ScanSearch } from 'lucide-react'
+import { Home, Camera, Info, Download, Share2, X, AlertCircle, Facebook, ScanSearch, Gift } from 'lucide-react'
 import ObjectDetectorCanvas, { type ObjectDetectorCanvasRef } from '@/components/ObjectDetectorCanvas'
+import SpinWheelCoupon from '@/components/SpinWheelCoupon'
 import { ROUTES } from '@/constants'
 import { dataURLtoBlob } from '@/lib/image'
 import ObjectDetectorInstructions from './components/ObjectDetectorInstructions'
@@ -22,6 +23,8 @@ export default function ObjectDetectorPage() {
   const [isCapturing, setIsCapturing] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [showSpinWheel, setShowSpinWheel] = useState(false)
+  const [hasSpun, setHasSpun] = useState(false)
 
   const canNativeShare =
     typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
@@ -217,6 +220,20 @@ export default function ObjectDetectorPage() {
             <div className="bg-black">
               <img src={capturedImage} alt="Object detection preview" className="w-full h-auto" />
             </div>
+            <div className="px-3 pb-2">
+              <button
+                onClick={() => setShowSpinWheel(true)}
+                disabled={hasSpun}
+                className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+                  hasSpun
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-linear-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-amber-500/30 active:scale-[0.98]'
+                }`}
+              >
+                <Gift size={16} />
+                {hasSpun ? 'ใช้คูปองแล้ว' : 'สุ่มคูปอง'}
+              </button>
+            </div>
             <div className="p-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs text-gray-200">
                 <Facebook size={14} className="text-sky-400" />
@@ -239,6 +256,12 @@ export default function ObjectDetectorPage() {
       {showInstructions && (
         <ObjectDetectorInstructions open={showInstructions} onClose={() => setShowInstructions(false)} />
       )}
+
+      <SpinWheelCoupon
+        open={showSpinWheel}
+        onClose={() => setShowSpinWheel(false)}
+        onSpun={() => setHasSpun(true)}
+      />
     </div>
   )
 }
